@@ -70,7 +70,8 @@ def newtons_opt(function, gradient, hessian, initial_point, convergence=CONV, nu
     """
     x = initial_point
     for i in range(num_iterations):
-        x = x - gradient(x)/hessian(x)
+        # dot product between inverse(hessian) and gradient
+        x = x - np.dot(gradient(x), np.linalg.inv(hessian(x))
         # np.allclose returns True if two arrays
         # are element-wise equal within a tolerance.
         if np.allclose(gradient(x), 0, atol=convergence):
