@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
 # An experimental local optimization package
-# Copyright (C) 2018 Ayers Lab <ayers@mcmaster.ca> 
+# Copyright (C) 2018 Ayers Lab <ayers@mcmaster.ca>
 #
 # This file is part of Flik.
 #
@@ -17,8 +18,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>
-# --
+
+
 """Get the version string from the git tag."""
+
 
 from __future__ import print_function
 

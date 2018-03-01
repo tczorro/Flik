@@ -58,6 +58,12 @@ wheels/
 *.spec
 pip-log.txt
 pip-delete-this-directory.txt
+record.txt
+.coverage
+cover/
+conda-bld
+flik.egg-info
+flik/version.py
 
 # Documentation
 docs/html/

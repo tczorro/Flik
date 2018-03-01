@@ -1,11 +1,38 @@
+..
+    : An experimental local optimization package
+    : Copyright (C) 2018 Ayers Lab <ayers@mcmaster.ca>.
+    :
+    : This file is part of Flik.
+    :
+    : Flik is free software; you can redistribute it and/or
+    : modify it under the terms of the GNU General Public License
+    : as published by the Free Software Foundation; either version 3
+    : of the License, or (at your option) any later version.
+    :
+    : Flik is distributed in the hope that it will be useful,
+    : but WITHOUT ANY WARRANTY; without even the implied warranty of
+    : MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    : GNU General Public License for more details.
+    :
+    : You should have received a copy of the GNU General Public License
+    : along with this program; if not, see <http://www.gnu.org/licenses/>
+
+
+.. image:: https://img.shields.io/badge/python-3.6-blue.svg
+    :target: https://docs.python.org/3.6/
 .. image:: https://travis-ci.org/QuantumElephant/Flik.svg?branch=master
     :target: https://travis-ci.org/QuantumElephant/Flik
-.. image:: https://anaconda.org/QuantumElephant/Flik/badges/version.svg
-    :target: https://anaconda.org/QuantumElephant/Flik
 .. image:: https://codecov.io/gh/QuantumElephant/Flik/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/QuantumElephant/Flik
+.. image:: https://anaconda.org/QuantumElephant/Flik/badges/version.svg
+    :target: https://anaconda.org/QuantumElephant/Flik
 
-*Put a general description of the project here*
+
+Flik
+####
+
+*An experimental local optimization package.*
+
 
 Installation
 ============
