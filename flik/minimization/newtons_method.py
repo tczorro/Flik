@@ -1,25 +1,57 @@
 #!/usr/bin/env python3
 
+# -*- coding: utf-8 -*-
+"""Newton's method file from flik.
 
-# JEN
+This module contains one function that runs Newton's method.
 
-# Feb 14, 2018
+Example
+-------
+Import this module and run the function on the function of
+your choice. You will need to know the gradient (first
+derivative), hessian (second derivative), and an initial guess.
 
-#TODO add type declaration syntax to function definition
-#from typing import Tuple, Callable
+    from flik.minimization import newtons_method
+
+    # using default arguments
+    results = newtons_method(func, gradient, hessian,
+    init_point)
+
+    # using user-specified arguments
+    results = newtons_method(funct, gradient, hessian,
+    init_point, convergence=0.001, num_iterations=50)
+
+Notes
+-----
+You can include optional arguments to specify the maximum
+number of iterations to perform (num_iterations) and the
+convergence tolerance (convergence). Convergence tolerance
+is the maximum difference permitted between the gradient's
+value at the calculated minimum/maximum and zero.
+
+
+Attributes
+----------
+CONV : float
+    Default convergence condition is 10E-06.
+
+NUM_ITERS : int
+    Default number of iterations to do is 100.
+
+
+.. _flik Documentation HOWTO:
+    https://github.com/QuantumElephant/Flik
+
+"""
 
 import numpy as np
 
-# define constants
-# these are used as the default
-# values for the newtons_opt function
-CONV = 10E-06       # convergence condition (error)
-NUM_ITERS = 100     # number of iterations to do
+CONV = 10E-06
+NUM_ITERS = 100
 
-
-def newtons_opt(function, gradient, hessian, initial_point, convergence=CONV, num_iterations=NUM_ITERS):
-    """Performs Newton's method for a given function in
-    order to find the minimum.
+def newtons_opt(function, gradient, hessian, initial_point,
+                convergence=CONV, num_iterations=NUM_ITERS):
+    """Perform Newton's method for a given function.
 
     Parameters
     ----------
@@ -42,6 +74,7 @@ def newtons_opt(function, gradient, hessian, initial_point, convergence=CONV, nu
     num_iterations : int
         The maximum number of iterations to do
         in order to reach convergence.
+
     Returns
     -------
     Tuple (
@@ -68,13 +101,12 @@ def newtons_opt(function, gradient, hessian, initial_point, convergence=CONV, nu
         of iterations specified by num_iterations.
 
     """
-    x = initial_point
+    min_point = initial_point
     for i in range(num_iterations):
         # dot product between inverse(hessian) and gradient
-        x = x - np.dot(gradient(x), np.linalg.inv(hessian(x))
+        min_point = min_point - np.dot(gradient(min_point), np.linalg.inv(hessian(min_point)))
         # np.allclose returns True if two arrays
         # are element-wise equal within a tolerance.
-        if np.allclose(gradient(x), 0, atol=convergence):
-            return (function(x), x, gradient(x), i)
+        if np.allclose(gradient(min_point), 0, atol=convergence):
+            return (function(min_point), min_point, gradient(min_point), i)
     raise ValueError(f"The function didn't converge within {num_iterations} iterations.")
-
