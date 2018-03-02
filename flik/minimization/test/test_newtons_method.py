@@ -1,93 +1,243 @@
 #!/usr/bin/env python3
 
-# test for newtons_method.py
-# March 1, 2018
+# -*- coding: utf-8 -*-
+"""Testing for newtons_method file from flik.
 
+This module contains one function that tests newtons_method
+for a single variable function, 5x^2 - 2x + 3.
+It asserts that a single-variable function converges in one
+step.
+
+This module also contains a class MultiVarFunction that
+inherits from the object class. The purpose of this object
+is to provide callables that are evaluated for functions
+at a given point.
+
+Example
+-------
+Run with nosetests or run from the terminal.
+
+    $ nosetests3 flik
+    $ python test_newtons_method.py
+
+
+.. _flik Documentation HOWTO:
+    https://github.com/QuantumElephant/Flik
+
+"""
+
+import numpy as np
 from flik.minimization import newtons_method
 
-class SingleVarFunction(object):
 
-    def __init__(self, coefficients, order):
-        self.coefficients = coefficients    # list
-        self.order = order                  # integer
-        if self.order != len(self.coefficients)-1:
-            raise ValueError("Order must be equal to the length of the coefficient list minus one.")
+class MultiVarFunction(object):
+    """Multiple variable function object.
 
-    def eval_function(self, x):
+    Parameters
+    ----------
+    structure : dict
+        The keys are the values of the coefficients.
+        The values of the keys is a list, where:
+        structure[coeff1] = [x_order, y_order, z_order]
+        Example: f(x,y) = axy^2 + bx^2 + cy + d
+        structure[a] = [1, 2]
+        structure[d] = [0, 0]
+    num_var : int
+        The number of variables in the function.
+
+    Returns
+    -------
+    None
+
+    """
+
+    def __init__(self, structure, num_var):
+        """Run constructor for MultiVarFunction class."""
+        self.structure = structure
+        self.num_var = num_var
+
+    def __call__(self, point):
         """Evaluate the function at the given point.
 
         Parameters
         ----------
-        x : float
+        point : list / numpy.array
             The point at which to evaluate the function.
+            The order of evaluation should be the same
+            as for the dictionary structure.
+            Example:
+            f(x,y,z) = 10x^2y^3z^1
+            point = [x,y,z]
+            structure = { 10: [2,3,1] }
 
         Returns
         -------
         float
             The value of the function at the given point.
 
+        Raises
+        ------
+        ValueError
+            The length of the point list is not the same
+            as the number of variables (num_var).
+
         """
+        if len(point) != self.num_var:
+            raise ValueError("Length of point list should be equal to the number of variables.")
         result = 0
-        for i, c in enumerate(range(self.order, -1, -1)):
-            result += self.coefficients[i]*x**c
+        for coeff in self.structure:
+            result += coeff*np.prod([point[i]**x for i, x in enumerate(self.structure[coeff])])
         return result
 
-def test_newtons_method():
-    """ test newtons method :)
+
+class Gradient(MultiVarFunction):
+    """1D array of multiple variable function objects.
+
+    Parameters
+    ----------
+    grad : list / np.array
+        A list of MultiVarFunction objects.
+
+    Returns
+    -------
+    None
+
     """
-    # quadratic 5x^2 - 2x + 3
-    f2 = SingleVarFunction([5, -2, 3], 2)
-    f2 = f2.eval_function
-    # 10x - 2
-    g2 = SingleVarFunction([10, -2], 1)
-    g2 = g2.eval_function
-    # 10
-    h2 = SingleVarFunction([10], 0)
-    h2 = h2.eval_function
-    # initial point
-    ip2 = 0.25
-    res = newtons_method.newtons_opt(f2, g2, h2, ip2)
 
-    # cubic -3x^3 + 10x^2 + 2x + 4
-    f3 = SingleVarFunction([-3, 10, 2, 4], 3)
-    f3 = f3.eval_function
-    # -9x^2 + 20x + 2
-    g3 = SingleVarFunction([-9, 20, 2], 2)
-    g3 = g3.eval_function
-    # -18x + 20
-    h3 = SingleVarFunction([-18, 20], 1)
-    h3 = h3.eval_function
-    # initial point
-    ip3 = 2.3
+    def __init__(self, grad):
+        """Run constructor for Gradient class."""
+        self.grad = grad
 
-    # quartic x^4 + 2x^3 + 3x^2 + 4x + 5
-    f4 = SingleVarFunction([1, 2, 3, 4, 5], 4)
-    f4 = f4.eval_function
-    # 4x^3 + 6x^2 + 6x + 4
-    g4 = SingleVarFunction([4, 6, 6, 4], 3)
-    g4 = g4.eval_function
-    # 12x^2 + 12x + 6
-    h4 = SingleVarFunction([12, 12, 6], 2)
-    h4 = h4.eval_function
-    # initial point
-    ip4 = -1.05
+    def __call__(self, point):
+        """Evaluate the gradient at the given point.
 
-    # quintic 2x^5 - x^4 + 3x^3 + 4x^2 + 3x + 2
-    f5 = SingleVarFunction([2, -1, 3, 4, 3, 2], 5)
-    f5 = f5.eval_function
-    # 10x^4 - 4x^3 + 9x^2 + 8x + 3
-    g5 = SingleVarFunction([10, -4, 9, 8, 3], 4)
-    g5 = g5.eval_function
-    # 40x^3 - 12x^2 + 18x + 8
-    h5 = SingleVarFunction([40, -12, 18, 8], 3)
-    h5 = h5.eval_function
-    # initial point
-    ip5 = -0.75
+        Parameters
+        ----------
+        point : list / numpy.array
+            The point at which to evaluate the gradient.
 
-    # result
-    print(res)
-    return res
+        Returns
+        -------
+        np.array
+            The value of the gradient at the given point.
+
+        """
+        return np.array([g(point) for g in self.grad])
+
+
+class Hessian(Gradient):
+    """2D array of multiple variable function objects.
+
+    Parameters
+    ----------
+    grad : np.array
+        A matrix containing Gradient objects.
+
+    Returns
+    -------
+    None
+
+    """
+
+    def __init__(self, hess):
+        """Run constructor for Hessian class."""
+        self.hess = hess
+
+    def __call__(self, point):
+        """Evaluate the hessian at the given point.
+
+        Parameters
+        ----------
+        point : list / numpy.array
+            The point at which to evaluate the hessian.
+
+        Returns
+        -------
+        np.array
+            The value of the hessian at the given point.
+
+        """
+        return np.array([h(point) for h in self.hess])
+
+
+def test_newtons_method_quad1():
+    """Test newtons_method for a single variable quadratic.
+
+    Notes
+    -----
+    The test function is: 5x^2 - 2x + 3
+    The test gradient is: 10x - 2
+    The test hessian is: 10
+    The test point is: [0.25]
+    Expect result of newtons_method to be:
+    (2.8, [0.2], 0.0, 0)
+
+    Returns
+    -------
+    None
+
+    """
+    quad = MultiVarFunction({5: [2], -2: [1], 3: [0]}, 1)
+    grad = MultiVarFunction({10: [1], -2: [0]}, 1)
+    hess = MultiVarFunction({10: [0]}, 1)
+    ip = [0.25]    # initial point
+    res = newtons_method.newtons_opt(quad, grad, hess, ip)
+    # check results
+    assert res[0] == 2.8, "Incorrect value of test function at minimum."
+    assert res[1] == [0.2], "Incorrect minimum found for test function."
+    assert res[2] == 0.0, "Incorrect value for the gradient at the minimum found."
+    assert res[3] == 1, "Incorrect number of iterations for the test function. Should be one."
+
+
+def test_newtons_method_quad2():
+    """Test newtons_method for a 2 variable quadratic.
+
+    Notes
+    -----
+    The test function is: 3x^2y - 7yx - 9
+    The test gradient [df/dx, df/dy] is:
+        [6xy-7y, 3x^2-7x]
+    The test hessian ([d2f/dx2,  d2f/dxdy],
+                      [d2f/dydx,  d2f/dy2]) is:
+        [6y,  6x-7],
+        [6x-7,   0]
+    The test point is: [-6,0]
+    Expect result of newtons_method to be:
+    ?
+
+    Returns
+    -------
+    None
+
+    """
+    # original function
+    quad2 = MultiVarFunction({3: [2, 1], -7: [1, 1], -9: [0, 0]}, 2)
+    # df/dx
+    grad2a = MultiVarFunction({6: [1, 1], -7: [0, 1]}, 2)
+    # df/dy
+    grad2b = MultiVarFunction({3: [2, 0], -7: [1, 0]}, 2)
+    # gradient
+    grad2 = Gradient(np.array([grad2a, grad2b]))
+    # d2f/dx2
+    hess2a = MultiVarFunction({6: [0, 1]}, 2)
+    # d2f/dxdy OR d2f/dydx
+    hess2b = MultiVarFunction({6: [1, 0], -7: [0, 0]}, 2)
+    # d2f/dy2
+    hess2d = MultiVarFunction({0: [0, 0]}, 2)
+    # hessian
+    hess2 = Hessian(
+        np.array(
+            [Gradient([hess2a, hess2b]),
+             Gradient([hess2b, hess2d])]
+        )
+    )
+    # initial point
+    ip2 = [-6, 0]
+    res = newtons_method.newtons_opt(quad2, grad2, hess2, ip2)
+    # positive number of iterations
+    assert res[-1] > 0
+
 
 if __name__ == "__main__":
-    test_newtons_method()
-
+    test_newtons_method_quad1()
+    test_newtons_method_quad2()

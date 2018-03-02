@@ -49,6 +49,7 @@ import numpy as np
 CONV = 10E-06
 NUM_ITERS = 100
 
+
 def newtons_opt(function, gradient, hessian, initial_point,
                 convergence=CONV, num_iterations=NUM_ITERS):
     """Perform Newton's method for a given function.
@@ -74,6 +75,13 @@ def newtons_opt(function, gradient, hessian, initial_point,
     num_iterations : int
         The maximum number of iterations to do
         in order to reach convergence.
+
+    Notes
+    -----
+    Cannot perform inversion (np.linalg.inv) on a single
+    function (needs to be at least a 2x2 array).
+    The function, np.allclose, returns True if two arrays
+    are element-wise equal within a tolerance.
 
     Returns
     -------
@@ -102,11 +110,13 @@ def newtons_opt(function, gradient, hessian, initial_point,
 
     """
     min_point = initial_point
-    for i in range(num_iterations):
+    for i in range(1, num_iterations+1):
         # dot product between inverse(hessian) and gradient
-        min_point = min_point - np.dot(gradient(min_point), np.linalg.inv(hessian(min_point)))
-        # np.allclose returns True if two arrays
-        # are element-wise equal within a tolerance.
+        if len(initial_point) > 1:
+            min_point = min_point - np.dot(gradient(min_point), np.linalg.inv(hessian(min_point)))
+        # only single variable function
+        else:
+            min_point = min_point - np.dot(gradient(min_point), 1/hessian(min_point))
         if np.allclose(gradient(min_point), 0, atol=convergence):
             return (function(min_point), min_point, gradient(min_point), i)
     raise ValueError(f"The function didn't converge within {num_iterations} iterations.")
