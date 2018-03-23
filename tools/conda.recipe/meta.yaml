@@ -1,6 +1,6 @@
 package:
   version:  "{{ PROJECT_VERSION }}" 
-  name: 'Flik'
+  name: 'flik'
 
 source:
   path: ../../

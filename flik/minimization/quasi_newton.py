@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # An experimental local optimization package
 # Copyright (C) 2018 Ayers Lab <ayers@mcmaster.ca>.
 #
@@ -19,9 +17,6 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 
 
-"""
-An experimental local optimization package.
-
-Copyright (C) 2018 Ayers Lab <ayers@mcmaster.ca>.
-
-"""
+# API: method_name_B(B, secant, step): -> new_B
+# or method_name_H(H, secant, step): -> new_H
+# testfilename should be test_method_name.py in minimization/test

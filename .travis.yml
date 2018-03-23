@@ -12,7 +12,7 @@ env:
     - secure: <REPLACE ME> 
     - PROJECT_NAME=flik
     - GITHUB_REPO_NAME=QuantumElephant/Flik
-    - CONDA_PKG_NAME_PY=Flik
+    - CONDA_PKG_NAME_PY=flik
 
 # TEMPLATED FROM https://raw.githubusercontent.com/theochem/derivcheck/master/.travis.yml
 # ####

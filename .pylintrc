@@ -254,13 +254,13 @@ redefining-builtins-modules=six.moves,future.builtins
 argument-name-hint=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
 
 # Regular expression matching correct argument names
-argument-rgx=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
+argument-rgx=([\w\d]+)$
 
 # Naming hint for attribute names
 attr-name-hint=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
 
 # Regular expression matching correct attribute names
-attr-rgx=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
+attr-rgx=([\w\d]+)$
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,baz,toto,tutu,tata
@@ -291,7 +291,7 @@ docstring-min-length=-1
 function-name-hint=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
 
 # Regular expression matching correct function names
-function-rgx=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
+function-rgx=(([a-z][a-z0-9_]{1,50})|(_[a-z0-9_]*))$
 
 # Good variable names which should always be accepted, separated by a comma
 good-names=i,j,k,_
@@ -333,7 +333,7 @@ property-classes=abc.abstractproperty
 variable-name-hint=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
 
 # Regular expression matching correct variable names
-variable-rgx=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
+variable-rgx=([\w\d]+)$
 
 
 [DESIGN]
