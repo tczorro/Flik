@@ -20,3 +20,50 @@
 # API: method_name_B(B, secant, step): -> new_B
 # or method_name_H(H, secant, step): -> new_H
 # testfilename should be test_method_name.py in minimization/test
+
+import numpy as np
+
+def update_hessian_bfgs(hessian, pointk, pointkp1):
+    """BFGs update for quasi-newton.
+    
+    Equation 6.19 from numerical optimisation book.
+    """
+    sk = pointkp1 - pointk
+    yk = grad(pointkp1) - grad(pointk)
+    newhess = hessian(pointk)
+    # part one
+    one = np.dot(np.dot(np.dot(sk, sk.T), hessian(pointk)), hessian(pointk))
+    one /= np.dot(np.dot(sk.T,hessian(pointk)), sk)
+    newhess -= one
+    # part two
+    newhess += np.dot(yk, yk.T)/np.dot(yk.T, sk)
+    return newhess
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

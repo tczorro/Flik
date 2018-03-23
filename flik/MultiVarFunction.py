@@ -268,7 +268,6 @@ class Hessian(MultiVarFunction):
         return res
                 
 
-
 if __name__ == "__main__":
     jen = MultiVarFunction({3: [2, 1], -7: [1, 1], -9: [0, 0]}, 2)
     g = jen.construct_grad()
