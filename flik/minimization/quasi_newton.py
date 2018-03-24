@@ -74,22 +74,24 @@ def quasi_newtons_opt(function, gradient, approx_hessian, val,
         raise ValueError("Argument num_iterations should be >= 1")
 
     # choose initial guess and non-singular hessian approximation
-    min_point = val
-    hessian = approx_hessian()
+    point = val
+    hessian = approx_hessian(point)
+
     # non-optimized step length
     step_length = 0.5
 
     for i in range(1, num_iterations+1):
         if len(initial_point) > 1:
-            direction =  -np.dot(gradient(min_point), np.linalg.inv(hessian))
+            step_direction = -np.dot(grad, np.linalg.inv(hessian))
         else:
-            direction =  -np.dot(gradient(min_point), 1/hessian)
+            step_direction = -np.dot(grad, 1/hessian)
 
         # update x
-        new_min_point = min_point + step_length * direction
-        #TODO: find a way to update hessian
-
+        point1 = point + step_length * step_direction
+        # update hessian
+        hessian = hessian.approximate(hessian, point, point1, option)
+        point = point1
 
         # stop when minimum
-        if np.allclose(gradient(min_point), 0, atol=convergence):
-            return function(min_point), min_point, gradient(min_point), i
+        if np.allclose(gradient(point), 0, atol=convergence):
+            return function(point), point, gradient(point), i
