@@ -21,15 +21,91 @@
 # or method_name_H(H, secant, step): -> new_H
 # testfilename should be test_method_name.py in minimization/test
 
+
+from numbers import Integral
+from numbers import Real
 import numpy as np
 
-def update_hessian_bfgs(hessian, pointk, pointkp1):
+CONV = 10E-06
+NUM_ITERS = 100
+
+def quasi_newtons_opt(function, gradient, hessian, val,
+                convergence=CONV, num_iterations=NUM_ITERS):
+    """Quasi-Newton method for approximate hessians.
+
+    Parameters
+    ----------
+    function : Callable
+        The function for which the minimum will
+        be computed.
+    gradient: Callable
+        The gradientient of the given function.
+        (1st derivative)
+    hessian : Callable
+        The approximation to hessian of the given function.
+        (2nd derivative)
+    val : numpy.ndarray
+        An initial guess for the function's
+        minimum value.
+    convergence : float
+        The condition for convergence (acceptable
+        error margin from zero for the returned
+        minimum).
+    num_iterations : int
+        The maximum number of iterations to do
+        in order to reach convergence.
+
+    """
+    # Check input
+    if not callable(function):
+        raise TypeError('Fucntion should be callable')
+    if not callable(gradient):
+        raise TypeError('gradientient should be callable')
+    #if not (isinstance(val, np.ndarray) and val.ndim == 1):
+    #    raise TypeError("Argument val should be a 1-dimensional numpy array")
+    if not isinstance(convergence, Real):
+        raise TypeError("Argument convergence should be a real number")
+    if not isinstance(num_iterations, Integral):
+        raise TypeError("Argument num_iterations should be an integer number")
+    if convergence < 0.0:
+        raise ValueError("Argument convergence should be >= 0.0")
+    if num_iterations <= 0:
+        raise ValueError("Argument num_iterations should be >= 1")
+
+    # choose initial guess and non-singular hessian approximation
+    point = val
+    hess = hessian
+
+    # non-optimized step length
+    step_length = 0.5
+
+    for i in range(1, num_iterations+1):
+        if len(point) > 1:
+            step_direction = -np.dot(gradient(point),
+                    np.linalg.inv(hess(point)))
+        else:
+            step_direction = -np.dot(gradient(point), 1/hess(point))
+
+        # new x
+        point1 = point + step_length * step_direction
+        # new hessian callable
+        new_hessian = update_hessian_bfgs(hessian, gradient, point, point1)
+        # update x
+        point = point1
+        # update hessian
+        hess = new_hessian
+        
+        # stop when minimum
+        if np.allclose(gradient(point), 0, atol=convergence):
+            return function(point), point, gradient(point), i
+
+def update_hessian_bfgs(hessian, gradient, pointk, pointkp1):
     """BFGs update for quasi-newton.
     
     Equation 6.19 from numerical optimisation book.
     """
     sk = pointkp1 - pointk
-    yk = grad(pointkp1) - grad(pointk)
+    yk = gradient(pointk) - gradient(pointk)
     newhess = hessian(pointk)
     # part one
     one = np.dot(np.dot(np.dot(sk, sk.T), hessian(pointk)), hessian(pointk))
@@ -38,32 +114,4 @@ def update_hessian_bfgs(hessian, pointk, pointkp1):
     # part two
     newhess += np.dot(yk, yk.T)/np.dot(yk.T, sk)
     return newhess
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
