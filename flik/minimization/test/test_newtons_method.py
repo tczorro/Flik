@@ -44,8 +44,8 @@ def test_newtons_method_quad1():
 
     """
     quad = MultiVarFunction({5: [2], -2: [1], 3: [0]}, 1)
-    grad = MultiVarFunction({10: [1], -2: [0]}, 1)
-    hess = MultiVarFunction({10: [0]}, 1)
+    grad = quad.construct_grad()
+    hess = quad.construct_hess()
     ip = [0.25]    # initial point
     res = newtons_method.newtons_opt(quad, grad, hess, ip)
     # check results
@@ -78,25 +78,8 @@ def test_newtons_method_quad2():
     """
     # original function
     quad2 = MultiVarFunction({3: [2, 1], -7: [1, 1], -9: [0, 0]}, 2)
-    # df/dx
-    grad2a = MultiVarFunction({6: [1, 1], -7: [0, 1]}, 2)
-    # df/dy
-    grad2b = MultiVarFunction({3: [2, 0], -7: [1, 0]}, 2)
-    # gradient
-    grad2 = Gradient(np.array([grad2a, grad2b]))
-    # d2f/dx2
-    hess2a = MultiVarFunction({6: [0, 1]}, 2)
-    # d2f/dxdy OR d2f/dydx
-    hess2b = MultiVarFunction({6: [1, 0], -7: [0, 0]}, 2)
-    # d2f/dy2
-    hess2d = MultiVarFunction({0: [0, 0]}, 2)
-    # hessian
-    hess2 = Hessian(
-        np.array(
-            [Gradient([hess2a, hess2b]),
-             Gradient([hess2b, hess2d])]
-        )
-    )
+    grad2 = quad2.construct_grad()
+    hess2 = quad2.construct_hess()
     # initial point
     ip2 = [-6, 0]
     res = newtons_method.newtons_opt(quad2, grad2, hess2, ip2)

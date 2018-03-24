@@ -197,6 +197,12 @@ class Gradient(MultiVarFunction):
         """Run constructor for Gradient class."""
         self.grad = grad
 
+    def __str__(self):
+        result = ""
+        for func in self.grad:
+            result += str(func) + '\n'
+        return result[:-1]
+
     def __getitem__(self, index):
         return self.grad[index]
 
@@ -241,6 +247,13 @@ class Hessian(MultiVarFunction):
         """Run constructor for Hessian class."""
         self.hess = hess
 
+    def __str__(self):
+        result = ""
+        for row in self.hess:
+            for func in row:
+                result += str(func) + '\n'
+        return result[:-1]
+
     def __getitem__(self, index):
         return self.hess[index]
 
@@ -272,5 +285,7 @@ if __name__ == "__main__":
     jen = MultiVarFunction({3: [2, 1], -7: [1, 1], -9: [0, 0]}, 2)
     g = jen.construct_grad()
     h = jen.construct_hess()
+    print(g)
+    print(h)
     print(g([2,3]))
     print(h([2,3]))
