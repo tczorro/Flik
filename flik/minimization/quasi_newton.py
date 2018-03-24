@@ -29,7 +29,6 @@ import numpy as np
 CONV = 10E-06
 NUM_ITERS = 100
 
-
 def quasi_newtons_opt(function, gradient, approx_hessian, val,
                 convergence=CONV, num_iterations=NUM_ITERS):
     """Quasi-Newton method for approximate hessians.
@@ -89,9 +88,26 @@ def quasi_newtons_opt(function, gradient, approx_hessian, val,
         # update x
         point1 = point + step_length * step_direction
         # update hessian
-        hessian = hessian.approximate(hessian, point, point1, option)
+        hessian = update_hessian_bfgs(hessian, point, point1)
         point = point1
 
         # stop when minimum
         if np.allclose(gradient(point), 0, atol=convergence):
             return function(point), point, gradient(point), i
+
+def update_hessian_bfgs(hessian, pointk, pointkp1):
+    """BFGs update for quasi-newton.
+    
+    Equation 6.19 from numerical optimisation book.
+    """
+    sk = pointkp1 - pointk
+    yk = grad(pointkp1) - grad(pointk)
+    newhess = hessian(pointk)
+    # part one
+    one = np.dot(np.dot(np.dot(sk, sk.T), hessian(pointk)), hessian(pointk))
+    one /= np.dot(np.dot(sk.T,hessian(pointk)), sk)
+    newhess -= one
+    # part two
+    newhess += np.dot(yk, yk.T)/np.dot(yk.T, sk)
+    return newhess
+
