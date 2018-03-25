@@ -29,7 +29,7 @@ import numpy as np
 CONV = 10E-06
 NUM_ITERS = 100
 
-def quasi_newtons_opt(function, gradient, hessian, val,
+def quasi_newtons_opt(function, gradient, hessian, val, update=None,
                 convergence=CONV, num_iterations=NUM_ITERS):
     """Quasi-Newton method for approximate hessians.
 
@@ -47,6 +47,8 @@ def quasi_newtons_opt(function, gradient, hessian, val,
     val : numpy.ndarray
         An initial guess for the function's
         minimum value.
+    update : Callable
+        Hessian approximation method
     convergence : float
         The condition for convergence (acceptable
         error margin from zero for the returned
@@ -61,6 +63,8 @@ def quasi_newtons_opt(function, gradient, hessian, val,
         raise TypeError('Fucntion should be callable')
     if not callable(gradient):
         raise TypeError('gradientient should be callable')
+    if not callable(hessian):
+        raise TypeError('gradientient should be callable')
     #if not (isinstance(val, np.ndarray) and val.ndim == 1):
     #    raise TypeError("Argument val should be a 1-dimensional numpy array")
     if not isinstance(convergence, Real):
@@ -74,27 +78,26 @@ def quasi_newtons_opt(function, gradient, hessian, val,
 
     # choose initial guess and non-singular hessian approximation
     point = val
-    hess = hessian
+    hess = hessian(point)
 
     # non-optimized step length
-    step_length = 0.5
+    step_length = 1
 
     for i in range(1, num_iterations+1):
         if len(point) > 1:
-            step_direction = -np.dot(gradient(point),
-                    np.linalg.inv(hess(point)))
+            step_direction = -gradient(point).dot(
+                    np.linalg.inv(hess))
         else:
-            step_direction = -np.dot(gradient(point), 1/hess(point))
+            step_direction = -np.dot(gradient(point), 1/hess)
 
         # new x
         point1 = point + step_length * step_direction
         # new hessian callable
-        new_hessian = update_hessian_bfgs(hessian, gradient, point, point1)
+        if update:
+            hess = update(hess, gradient, point, point1)
         # update x
         point = point1
-        # update hessian
-        hess = new_hessian
-        
+
         # stop when minimum
         if np.allclose(gradient(point), 0, atol=convergence):
             return function(point), point, gradient(point), i
@@ -106,12 +109,24 @@ def update_hessian_bfgs(hessian, gradient, pointk, pointkp1):
     """
     sk = pointkp1 - pointk
     yk = gradient(pointk) - gradient(pointk)
-    newhess = hessian(pointk)
+    newhess = hessian
     # part one
-    one = np.dot(np.dot(np.dot(sk, sk.T), hessian(pointk)), hessian(pointk))
-    one /= np.dot(np.dot(sk.T,hessian(pointk)), sk)
+    one = np.dot(np.dot(np.dot(sk, sk.T), newhess), newhess)
+    one /= np.dot(np.dot(sk.T,newhess), sk)
     newhess -= one
     # part two
     newhess += np.dot(yk, yk.T)/np.dot(yk.T, sk)
     return newhess
+
+def update_hessian_broyden(hessian, gradient, point, point1):
+    """
+    Approximate Hessian with new x
+    Good Broyden style
+    """
+    sk = point1 - point
+    yk = gradient(point1) - gradient(point)
+    yk -= np.dot(hessian, sk)
+    yk /= np.dot(sk, sk)
+    hessian += np.outer(yk, sk.T)
+    return hessian
 
