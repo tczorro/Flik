@@ -41,8 +41,8 @@ def test_quasi_newton_quad1():
 
     """
     quad = MultiVarFunction({5: [2], -2: [1], 3: [0]}, 1)
-    grad = MultiVarFunction({10: [1], -2: [0]}, 1)
-    hess = MultiVarFunction({10: [0]}, 1)
+    grad = quad.construct_grad()
+    hess = quad.construct_hess()
     val = [0.25]
     res = quasi_newton.quasi_newtons_opt(quad, grad, hess, val)
     
@@ -77,6 +77,7 @@ def test_quasi_newton_quad2():
     jen = MultiVarFunction({3: [2, 1], -7: [1, 1], -9: [0, 0]}, 2)
     g = jen.construct_grad()
     h = jen.construct_hess()
+    print(h([-6,0]))
 
     val = [-6, 0]
     res = quasi_newton.quasi_newtons_opt(jen, g, h, val)
