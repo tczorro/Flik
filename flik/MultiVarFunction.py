@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-
-# -*- coding: utf-8 -*-
 """MultiVarFunction class from flik.
 
 This module contains a class MultiVarFunction that

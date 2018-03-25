@@ -21,6 +21,7 @@ Run with nosetests or run from the terminal.
 import numpy as np
 from flik.minimization import quasi_newton
 from flik.MultiVarFunction import MultiVarFunction, Gradient, Hessian
+from numpy.testing import assert_almost_equal, assert_equal
 
 
 def test_quasi_newton_quad1():
@@ -43,14 +44,20 @@ def test_quasi_newton_quad1():
     quad = MultiVarFunction({5: [2], -2: [1], 3: [0]}, 1)
     grad = MultiVarFunction({10: [1], -2: [0]}, 1)
     hess = MultiVarFunction({10: [0]}, 1)
-    val = [0.25]
+    val = np.array([0.25])
+
+    # check results function
+    def success(res):
+        assert_almost_equal(res[0], 2.8, decimal=4)
+        assert_almost_equal(res[1], np.array([0.2]), decimal=4)
+        assert_almost_equal(res[2], np.array([0.0]), decimal=4)
+
+    # basically newton's method
     res = quasi_newton.quasi_newtons_opt(quad, grad, hess, val)
-    
-    # check results
-    assert res[0] == 2.8, "Incorrect value of test function at minimum."
-    assert res[1] == [0.2], "Incorrect minimum found for test function."
-    assert res[2] == 0.0, "Incorrect value for the gradient at the minimum found."
-    assert res[3] == 1, "Incorrect number of iterations for the test function. Should be one."
+    success(res)
+    # Broyden quasi-newton
+    res = quasi_newton.quasi_newtons_opt(quad, grad, hess, val, quasi_newton.update_hessian_broyden)
+    success(res)
 
 
 def test_quasi_newton_quad2():
@@ -74,43 +81,14 @@ def test_quasi_newton_quad2():
     None
 
     """
+    # doesn't work yet
     jen = MultiVarFunction({3: [2, 1], -7: [1, 1], -9: [0, 0]}, 2)
     g = jen.construct_grad()
     h = jen.construct_hess()
 
-    val = [-6, 0]
+    val = np.array([-6, 0])
     res = quasi_newton.quasi_newtons_opt(jen, g, h, val)
-    print(res)
-    '''
-    # original function
-    quad2 = MultiVarFunction({3: [2, 1], -7: [1, 1], -9: [0, 0]}, 2)
-    # df/dx
-    grad2a = MultiVarFunction({6: [1, 1], -7: [0, 1]}, 2)
-    # df/dy
-    grad2b = MultiVarFunction({3: [2, 0], -7: [1, 0]}, 2)
-    # gradient
-    grad2 = Gradient(np.array([grad2a, grad2b]))
-    # d2f/dx2
-    hess2a = MultiVarFunction({6: [0, 1]}, 2)
-    # d2f/dxdy OR d2f/dydx
-    hess2b = MultiVarFunction({6: [1, 0], -7: [0, 0]}, 2)
-    # d2f/dy2
-    hess2d = MultiVarFunction({0: [0, 0]}, 2)
-    # hessian
-    hess2 = Hessian(
-        np.array(
-            [Gradient([hess2a, hess2b]),
-             Gradient([hess2b, hess2d])]
-        )
-    )
-    # initial point
-    val = [-6, 0]
-    res = quasi_newton.quasi_newtons_opt(quad2, grad2, hess2, val)
-    # positive number of iterations
-    assert res[-1] > 0
-    '''
-
 
 if __name__ == "__main__":
-    #test_quasi_newton_quad1()
-    test_quasi_newton_quad2()
+    test_quasi_newton_quad1()
+    #test_quasi_newton_quad2()
