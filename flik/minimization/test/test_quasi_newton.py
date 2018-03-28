@@ -90,6 +90,51 @@ def test_quasi_newton_quad2():
     val = np.array([-6, 0])
     res = quasi_newton.quasi_newtons_opt(jen, g, h, val)
 
+def test_update_hessian_bfgs():
+    """Test the update_hessian_bfgs function.
+
+    Makes sure that the gradient and hessians are
+    evaluated properly by MultiVarFunction.
+
+    Makes sure that the function returns a valid
+    hessian of the correct value and shape.
+
+    """
+    # make the test function
+    # 2xy^2 + 3x^2 + 7
+    func = MultiVarFunction({2: [1,2], 3:[2,0], 7:[0,0]}, 2)
+    # make the gradient
+    grad = func.construct_grad()
+    # check df/dx (partial wrt x)
+    assert grad[0].structure == {2: [0,2], 6: [1,0]}
+    # check df/dy (partial wrt y)
+    assert grad[1].structure == {4: [1,1]}
+    # make the hessian
+    hess = func.construct_hess()
+    # check d2f/dx2
+    assert hess[0][0].structure == {6: [0,0]}
+    # check d2f/dxdy
+    assert hess[0][1].structure == {4: [0,1]}
+    # check d2f/dydx
+    assert hess[1][0].structure == {4: [0,1]}
+    # check d2f/dy2
+    assert hess[1][1].structure == {4: [1,0]}
+    # evaluate hessian at arbitrary point
+    hess_eval = hess([1,2])
+    # check evaluation of hessian at point (1,2)
+    assert np.equal(hess_eval, np.array([[6., 8.], [8., 4.]])).all()
+    # choose some arbitrary points
+    pk = np.array([2,3])
+    pk1 = np.array([3,4])
+    result = quasi_newton.update_hessian_bfgs(hess_eval, 
+                                              grad, pk, pk1)
+    # check the resulting array
+    assert np.equal(result, np.array([
+                    [-190+400/-44, -160+480/-44],
+                    [-160+480/-44, -140+576/-44]])).all()
+
+
 if __name__ == "__main__":
     test_quasi_newton_quad1()
     #test_quasi_newton_quad2()
+    test_update_hessian_bfgs()

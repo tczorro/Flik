@@ -104,18 +104,40 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
 
 def update_hessian_bfgs(hessian, gradient, pointk, pointkp1):
     """BFGs update for quasi-newton.
-    
-    Equation 6.19 from numerical optimisation book.
+
+    Returns an estimate of the hessian as to avoid
+    evaluating the hessian. Uses equation 6.19 from
+    numerical optimisation book.
+
+    Parameters
+    ----------
+    hessian : np.ndarray
+        An evaluated hessian (square matrix).
+    gradient : callable array
+        The gradient of the function (not
+        evaluated).
+    pointk : np.ndarray
+        An array representing the point at which
+        to evaluate the function, gradient, and
+        hessian.
+    pointkp1 : np.ndarray
+        An array representing the next point for
+        evaluation (k plus 1).
+
+    Returns
+    -------
+    np.ndarray
+        The estimation of the hessian (evaluated).
+
     """
     sk = pointkp1 - pointk
-    yk = gradient(pointk) - gradient(pointk)
-    newhess = hessian
+    yk = gradient(pointk) - gradient(pointkp1)
+    newhess = hessian.copy()
     # part one
-    one = np.dot(np.dot(np.dot(sk, sk.T), newhess), newhess)
-    one /= np.dot(np.dot(sk.T,newhess), sk)
+    one = np.dot(np.dot(newhess, np.outer(sk, sk)), newhess)
     newhess -= one
     # part two
-    newhess += np.dot(yk, yk.T)/np.dot(yk.T, sk)
+    newhess += np.outer(yk, yk)/np.dot(yk, sk)
     return newhess
 
 def update_hessian_broyden(hessian, gradient, point, point1):
