@@ -150,3 +150,51 @@ def update_hessian_broyden(hessian, gradient, point, point1):
     hessian += np.outer(yk, sk.T)
     return hessian
 
+def update_hessian_sr1(hessian, gradient, point, point1):
+    """
+    Approximate Hessian with new x
+    SR1 style
+
+    Parameters
+    ----------
+    hessian : np.ndarray((N,N))
+    gradient : Callable
+    point : np.array((N,))
+    point1 : np.array((N,))
+
+    Returns
+    -------
+    hessian : np.ndarray((N,N))
+    """
+    sk = point1 - point
+    yk = gradient(point1) - gradient(point)
+    yk -= np.dot(hessian, sk)
+    yk = np.outer(yk, yk.T) / np.outer(yk.T, sk)
+    hessian += yk / sk
+    return hessian
+
+def update_hessian_dfp(hessian, gradient, point, point1):
+    """
+    Approximate Hessian with new x
+    DFP style
+
+    Parameters
+    ----------
+    hessian : np.ndarray((N,N))
+    gradient : Callable
+    point : np.array((N,))
+    point1 : np.array((N,))
+
+    Returns
+    -------
+    hessian : np.ndarray((N,N))
+    """
+    sk = point1 - point
+    yk = gradient(point1) - gradient(point)
+    a = -np.outer(yk, sk) / np.dot(yk, sk)
+    b = -np.outer(sk, yk) / np.dot(yk, sk)
+    c = -np.outer(yk, yk) / np.dor(yk, sk)
+    a += np.eye(a.shape[0])
+    b += np.eye(b.shape[0])
+    hessian = np.dot(np.dot(a, hessian), b) + c
+    return hessian

@@ -51,6 +51,7 @@ def test_jen_quad2():
     quad2 = MultiVarFunction({3: [2, 1], -7: [1, 1], -9: [0, 0]}, 2)
     grad2 = quad2.construct_grad()
     hess2 = quad2.construct_hess()
+    val = np.array([-6, 0])
     assert_equal(quad2(val), f(val))
     assert_equal(grad2(val), g(val))
     assert_equal(hess2(val), h(val))
