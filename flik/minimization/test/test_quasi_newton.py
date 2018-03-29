@@ -193,11 +193,12 @@ def test_update_hessian_bfgs():
     pk = np.array([2,3])
     pk1 = np.array([3,4])
     result = quasi_newton.update_hessian_bfgs(hess_eval, 
-                                              grad, pk, pk1)
+                                              grad, pk, pk1,
+                                              False)
     # check the resulting array
     assert np.equal(result, np.array([
-                    [-190+400/-44, -160+480/-44],
-                    [-160+480/-44, -140+576/-44]])).all()
+                    [-190+400/44, -160+480/44],
+                    [-160+480/44, -140+576/44]])).all()
 
 
 if __name__ == "__main__":
