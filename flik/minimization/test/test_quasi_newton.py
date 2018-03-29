@@ -21,8 +21,45 @@ Run with nosetests or run from the terminal.
 import numpy as np
 from flik.minimization import quasi_newton
 from flik.MultiVarFunction import MultiVarFunction, Gradient, Hessian
-from numpy.testing import assert_almost_equal, assert_equal
+from numpy.testing import assert_almost_equal, assert_array_almost_equal, assert_equal
+import time
 
+
+def test_jen_quad2():
+    def f(x):
+        """Test scaction.
+        x : np.array((N,))
+        f(x) : np.array((1))
+        """
+        return np.array([3*x[1]*x[0]**2 - 7*x[0]*x[1] - 9])
+    
+    def g(x):
+        """Test gradient.
+        x = np.array((N,))
+        g(x) = np.array((N,))
+        """
+        return np.array([6*x[0]*x[1] - 7*x[1], 3*x[0]**2 - 7*x[0]])
+    
+    def h(x):
+        """Test hessian.
+        x = np.array((N,))
+        h(x) = np.array((N,N))
+        """
+        return np.array([[6*x[1], 6*x[0] - 7], [6*x[0] - 7, 0.]])
+
+    # test Jen's functions
+    quad2 = MultiVarFunction({3: [2, 1], -7: [1, 1], -9: [0, 0]}, 2)
+    grad2 = quad2.construct_grad()
+    hess2 = quad2.construct_hess()
+    val = np.array([-6, 0])
+    assert_equal(quad2(val), f(val))
+    assert_equal(grad2(val), g(val))
+    assert_equal(hess2(val), h(val))
+    
+    # check function returns
+    assert_equal(quad2(val), np.array([-9]))
+    assert_equal(grad2(val), np.array([0, 150]))
+    assert_equal(hess2(val), np.array([[0, -43], [-43, 0]]))
 
 def test_quasi_newton_quad1():
     """Test newtons_method for a single variable quadratic.
@@ -81,14 +118,43 @@ def test_quasi_newton_quad2():
     None
 
     """
-    # doesn't work yet
-    jen = MultiVarFunction({3: [2, 1], -7: [1, 1], -9: [0, 0]}, 2)
-    g = jen.construct_grad()
-    h = jen.construct_hess()
-    print(h([-6,0]))
+    quad2 = MultiVarFunction({3: [2, 1], -7: [1, 1], -9: [0, 0]}, 2)
+    grad2 = quad2.construct_grad()
+    hess2 = quad2.construct_hess()
 
     val = np.array([-6, 0])
-    res = quasi_newton.quasi_newtons_opt(jen, g, h, val)
+    
+    #step = np.dot(-grad2(val), np.linalg.inv(hess2(val))))
+    start = time.time()
+    res = quasi_newton.quasi_newtons_opt(quad2, grad2, hess2, val, update=None)
+    end = time.time()
+    print(end-start)
+    print('newtons',res[0],res[1],res[2],res[3])
+
+    
+    start = time.time()
+    res = quasi_newton.quasi_newtons_opt(quad2, grad2, hess2, val,
+            quasi_newton.update_hessian_broyden)
+    end = time.time()
+    print(end-start)
+    print('quasi',res[0],res[1],res[2],res[3])
+    #print(res[1])
+
+def test_update_hessian_broyden():
+    """Test broyden approximation"""
+    quad2 = MultiVarFunction({3: [2, 1], -7: [1, 1], -9: [0, 0]}, 2)
+    grad2 = quad2.construct_grad()
+    hess2 = quad2.construct_hess()
+
+    val = np.array([-6, 0])
+
+    hess = hess2(val)
+    step = np.dot(-grad2(val), np.linalg.inv(hess))
+    val1 = val + step
+
+    new_hess = quasi_newton.update_hessian_broyden(hess, grad2, val, val1)
+    answer_is = np.array([[0,-43],[-32.53,0]])
+    assert_array_almost_equal(new_hess, answer_is, decimal=2)
 
 def test_update_hessian_bfgs():
     """Test the update_hessian_bfgs function.
@@ -136,5 +202,7 @@ def test_update_hessian_bfgs():
 
 if __name__ == "__main__":
     test_quasi_newton_quad1()
-    #test_quasi_newton_quad2()
     test_update_hessian_bfgs()
+    #test_quasi_newton_quad1()
+    test_quasi_newton_quad2()
+    #test_update_hessian_broyden()

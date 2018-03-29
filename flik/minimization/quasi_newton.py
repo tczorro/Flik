@@ -38,17 +38,22 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
     function : Callable
         The function for which the minimum will
         be computed.
+        returns np.array((1))
     gradient: Callable
         The gradientient of the given function.
         (1st derivative)
+        returns np.array((N,))
     hessian : Callable
         The approximation to hessian of the given function.
         (2nd derivative)
-    val : numpy.ndarray
+        returns np.array((N,N))
+    val : numpy.ndarray((N,))
         An initial guess for the function's
         minimum value.
     update : Callable
-        Hessian approximation method
+        Hessian approximation method.
+        If none just newtons method.
+        returns np.array((N,N))
     convergence : float
         The condition for convergence (acceptable
         error margin from zero for the returned
@@ -58,6 +63,8 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
         in order to reach convergence.
 
     """
+    #TODO: correct docs
+
     # Check input
     if not callable(function):
         raise TypeError('Fucntion should be callable')
@@ -84,6 +91,9 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
     step_length = 1
 
     for i in range(1, num_iterations+1):
+        if not update:
+            hess = hessian(point)
+        
         if len(point) > 1:
             step_direction = -gradient(point).dot(
                     np.linalg.inv(hess))
@@ -97,7 +107,6 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
             hess = update(hess, gradient, point, point1)
         # update x
         point = point1
-
         # stop when minimum
         if np.allclose(gradient(point), 0, atol=convergence):
             return function(point), point, gradient(point), i
@@ -144,6 +153,17 @@ def update_hessian_broyden(hessian, gradient, point, point1):
     """
     Approximate Hessian with new x
     Good Broyden style
+
+    Parameters
+    ----------
+    hessian : np.ndarray((N,N))
+    gradient : Callable
+    point : np.array((N,))
+    point1 : np.array((N,))
+    
+    Returns
+    -------
+    hessian : np.ndarray((N,N))
     """
     sk = point1 - point
     yk = gradient(point1) - gradient(point)
@@ -152,3 +172,51 @@ def update_hessian_broyden(hessian, gradient, point, point1):
     hessian += np.outer(yk, sk.T)
     return hessian
 
+def update_hessian_sr1(hessian, gradient, point, point1):
+    """
+    Approximate Hessian with new x
+    SR1 style
+
+    Parameters
+    ----------
+    hessian : np.ndarray((N,N))
+    gradient : Callable
+    point : np.array((N,))
+    point1 : np.array((N,))
+
+    Returns
+    -------
+    hessian : np.ndarray((N,N))
+    """
+    sk = point1 - point
+    yk = gradient(point1) - gradient(point)
+    yk -= np.dot(hessian, sk)
+    yk = np.outer(yk, yk.T) / np.outer(yk.T, sk)
+    hessian += yk / sk
+    return hessian
+
+def update_hessian_dfp(hessian, gradient, point, point1):
+    """
+    Approximate Hessian with new x
+    DFP style
+
+    Parameters
+    ----------
+    hessian : np.ndarray((N,N))
+    gradient : Callable
+    point : np.array((N,))
+    point1 : np.array((N,))
+
+    Returns
+    -------
+    hessian : np.ndarray((N,N))
+    """
+    sk = point1 - point
+    yk = gradient(point1) - gradient(point)
+    a = -np.outer(yk, sk) / np.dot(yk, sk)
+    b = -np.outer(sk, yk) / np.dot(yk, sk)
+    c = -np.outer(yk, yk) / np.dor(yk, sk)
+    a += np.eye(a.shape[0])
+    b += np.eye(b.shape[0])
+    hessian = np.dot(np.dot(a, hessian), b) + c
+    return hessian
