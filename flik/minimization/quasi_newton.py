@@ -180,11 +180,16 @@ def update_hessian_broyden(hessian, gradient, point, point1, inv):
     """
     sk = point1 - point
     yk = gradient(point1) - gradient(point)
-    yk -= np.dot(hessian, sk)
-    yk /= np.dot(sk, sk)
-    hessian += np.outer(yk, sk.T)
+
     if inv:
-        raise NotImplementedError
+
+        t = xk - np.dot(hessian, yk)
+        t2 = np.outer(np.dot(sk, hessian), yk)
+        hessian += np.dot(np.outer(t, sk), hessian) / t2
+    else:
+        yk -= np.dot(hessian, sk)
+        yk /= np.dot(sk, sk)
+        hessian += np.outer(yk, sk.T)
     return hessian
 
 def update_hessian_sr1(hessian, gradient, point, point1):
