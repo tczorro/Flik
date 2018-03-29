@@ -96,7 +96,8 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
     for i in range(1, num_iterations+1):
         if not update:
             hess = hessian(point)
-        
+
+        # calculate step
         if len(point) > 1:
             # Check if hessian is approximated as inverse
             if inv:
@@ -199,11 +200,16 @@ def update_hessian_broyden(hessian, gradient, point, point1, inv):
     """
     sk = point1 - point
     yk = gradient(point1) - gradient(point)
-    yk -= np.dot(hessian, sk)
-    yk /= np.dot(sk, sk)
-    hessian += np.outer(yk, sk.T)
+    # approximate inverse Hessian
     if inv:
-        raise NotImplementedError
+        t = xk - np.dot(hessian, yk)
+        t2 = np.outer(np.dot(sk, hessian), yk)
+        hessian += np.dot(np.outer(t, sk), hessian) / t2
+    # approximate Hessian
+    else:
+        yk -= np.dot(hessian, sk)
+        yk /= np.dot(sk, sk)
+        hessian += np.outer(yk, sk.T)
     return hessian
 
 def update_hessian_sr1(hessian, gradient, point, point1, inv):
@@ -264,12 +270,18 @@ def update_hessian_dfp(hessian, gradient, point, point1, inv):
     """
     sk = point1 - point
     yk = gradient(point1) - gradient(point)
-    a = -np.outer(yk, sk) / np.dot(yk, sk)
-    b = -np.outer(sk, yk) / np.dot(yk, sk)
-    c = -np.outer(yk, yk) / np.dor(yk, sk)
-    a += np.eye(a.shape[0])
-    b += np.eye(b.shape[0])
-    hessian = np.dot(np.dot(a, hessian), b) + c
+    # approximate inverse Hessian
     if inv:
-        raise NotImplementedError
+        a = -np.outer(sk, yk) / np.dot(sk, yk)
+        b = np.dot(np.dot(hessian, np.outer(yk, yk)), hessian)
+        b /= np.outer(np.dot(yk,h),yk)
+        hessian += a - b
+    # spproximate Hessian
+    else:
+        a = -np.outer(yk, sk) / np.dot(yk, sk)
+        b = -np.outer(sk, yk) / np.dot(yk, sk)
+        c = -np.outer(yk, yk) / np.dor(yk, sk)
+        a += np.eye(a.shape[0])
+        b += np.eye(b.shape[0])
+        hessian = np.dot(np.dot(a, hessian), b) + c
     return hessian
