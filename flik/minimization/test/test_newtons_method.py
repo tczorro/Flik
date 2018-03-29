@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-
-# -*- coding: utf-8 -*-
 """Testing for newtons_method file from flik.
 
 This module contains one function that tests newtons_method
