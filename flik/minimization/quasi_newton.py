@@ -143,6 +143,12 @@ def update_hessian_bfgs(hessian, gradient, pointk, pointkp1, inv):
     pointkp1 : np.ndarray
         An array representing the next point for
         evaluation (k plus 1).
+    inv : bool
+        If True, the given hessian is inverted, and
+        the resulting hessian should be calculated
+        accordingly. If False, the given hessian is
+        not inverted, and the BFGS method should be
+        applied as normal.
 
     Returns
     -------
@@ -151,15 +157,28 @@ def update_hessian_bfgs(hessian, gradient, pointk, pointkp1, inv):
 
     """
     sk = pointkp1 - pointk
-    yk = gradient(pointk) - gradient(pointkp1)
+    yk = gradient(pointkp1) - gradient(pointk)
     newhess = hessian.copy()
-    # part one
-    one = np.dot(np.dot(newhess, np.outer(sk, sk)), newhess)
-    newhess -= one
-    # part two
-    newhess += np.outer(yk, yk)/np.dot(yk, sk)
-    if inv:
-        raise NotImplementedError
+    # regular hessian approximation
+    if not inv:
+        # part one
+        one = np.dot(np.dot(newhess, np.outer(sk, sk)), newhess)
+        newhess -= one
+        # part two
+        newhess += np.outer(yk, yk)/np.dot(yk, sk)
+    # inverted hessian approximation
+    else:
+        # can change this to gradient.shape() if
+        # the input is guaranteed to be a numpy array
+        size = len(gradient)
+        # denominator (to avoid calculating 3 times)
+        denom = np.dot(yk, sk)
+        # part one
+        one = np.identity(size) - np.outer(sk, yk)/denom
+        # part two
+        two = np.identity(size) - np.outer(yk, sk)/denom
+        # part three
+        newhess = np.dot(np.dot(one, hessian), two) + np.outer(sk, sk)/denom
     return newhess
 
 def update_hessian_broyden(hessian, gradient, point, point1, inv):
@@ -187,30 +206,45 @@ def update_hessian_broyden(hessian, gradient, point, point1, inv):
         raise NotImplementedError
     return hessian
 
-def update_hessian_sr1(hessian, gradient, point, point1):
-    """
-    Approximate Hessian with new x
-    SR1 style
+def update_hessian_sr1(hessian, gradient, point, point1, inv):
+    """Approximate Hessian with new SR1 style.
 
     Parameters
     ----------
     hessian : np.ndarray((N,N))
+        An evaluated hessian (square matrix).
     gradient : Callable
+        The gradient of the function (not
+        evaluated).
     point : np.array((N,))
+        An array representing the point at which
+        to evaluate the function, gradient, and
+        hessian.
     point1 : np.array((N,))
+        An array representing the next point for
+        evaluation (k plus 1).
+    inv : bool
+        If True, calculates the result as if
+        the given evaluated hessian was inverted.
+        If False, calculates the result as normal.
 
     Returns
     -------
     hessian : np.ndarray((N,N))
+        The estimation of the hessian (evaluated).
+
     """
     sk = point1 - point
     yk = gradient(point1) - gradient(point)
-    yk -= np.dot(hessian, sk)
-    yk = np.outer(yk, yk.T) / np.outer(yk.T, sk)
-    hessian += yk / sk
-    if inv:
-        raise NotImplementedError
-    return hessian
+    newhess = hessian.copy()
+    if not inv:
+        yk -= np.dot(newhess, sk)
+        yk = np.outer(yk, yk.T) / np.outer(yk.T, sk)
+        newhess += yk / sk
+    else:
+        piece = sk - np.dot(newhess, yk)
+        newhess += np.outer(piece, piece)/np.dot(piece, yk)
+    return newhess
 
 def update_hessian_dfp(hessian, gradient, point, point1, inv):
     """
