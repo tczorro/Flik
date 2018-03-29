@@ -30,7 +30,7 @@ CONV = 10E-06
 NUM_ITERS = 100
 
 def quasi_newtons_opt(function, gradient, hessian, val, update=None,
-                convergence=CONV, num_iterations=NUM_ITERS):
+                inv=None, convergence=CONV, num_iterations=NUM_ITERS):
     """Quasi-Newton method for approximate hessians.
 
     Parameters
@@ -54,6 +54,9 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
         Hessian approximation method.
         If none just newtons method.
         returns np.array((N,N))
+    inv : str
+        Option for inverse Hessian approximation.
+        If none then approximate the Hessian.
     convergence : float
         The condition for convergence (acceptable
         error margin from zero for the returned
@@ -95,23 +98,31 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
             hess = hessian(point)
         
         if len(point) > 1:
-            step_direction = -gradient(point).dot(
+            # Check if hessian is approximated as inverse
+            if inv:
+                step_direction = np.dot(-gradient(point),
+                                        hess)
+            # Hessian is not inverse
+            else:
+                step_direction = -gradient(point).dot(
                     np.linalg.inv(hess))
         else:
             step_direction = -np.dot(gradient(point), 1/hess)
 
         # new x
         point1 = point + step_length * step_direction
-        # new hessian callable
+        
+        # new hessian callable by approximation
         if update:
-            hess = update(hess, gradient, point, point1)
+            hess = update(hess, gradient, point, point1, inv)
         # update x
         point = point1
+        
         # stop when minimum
         if np.allclose(gradient(point), 0, atol=convergence):
             return function(point), point, gradient(point), i
 
-def update_hessian_bfgs(hessian, gradient, pointk, pointkp1):
+def update_hessian_bfgs(hessian, gradient, pointk, pointkp1, inv):
     """BFGs update for quasi-newton.
 
     Returns an estimate of the hessian as to avoid
@@ -147,9 +158,11 @@ def update_hessian_bfgs(hessian, gradient, pointk, pointkp1):
     newhess -= one
     # part two
     newhess += np.outer(yk, yk)/np.dot(yk, sk)
+    if inv:
+        raise NotImplementedError
     return newhess
 
-def update_hessian_broyden(hessian, gradient, point, point1):
+def update_hessian_broyden(hessian, gradient, point, point1, inv):
     """
     Approximate Hessian with new x
     Good Broyden style
@@ -170,6 +183,8 @@ def update_hessian_broyden(hessian, gradient, point, point1):
     yk -= np.dot(hessian, sk)
     yk /= np.dot(sk, sk)
     hessian += np.outer(yk, sk.T)
+    if inv:
+        raise NotImplementedError
     return hessian
 
 def update_hessian_sr1(hessian, gradient, point, point1):
@@ -193,9 +208,11 @@ def update_hessian_sr1(hessian, gradient, point, point1):
     yk -= np.dot(hessian, sk)
     yk = np.outer(yk, yk.T) / np.outer(yk.T, sk)
     hessian += yk / sk
+    if inv:
+        raise NotImplementedError
     return hessian
 
-def update_hessian_dfp(hessian, gradient, point, point1):
+def update_hessian_dfp(hessian, gradient, point, point1, inv):
     """
     Approximate Hessian with new x
     DFP style
@@ -219,4 +236,6 @@ def update_hessian_dfp(hessian, gradient, point, point1):
     a += np.eye(a.shape[0])
     b += np.eye(b.shape[0])
     hessian = np.dot(np.dot(a, hessian), b) + c
+    if inv:
+        raise NotImplementedError
     return hessian
