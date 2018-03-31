@@ -27,7 +27,7 @@ from numbers import Real
 import numpy as np
 
 CONV = 10E-06
-NUM_ITERS = 100
+NUM_ITERS = 30
 
 def quasi_newtons_opt(function, gradient, hessian, val, update=None,
                 inv=False, convergence=CONV, num_iterations=NUM_ITERS):
@@ -90,6 +90,7 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
     # choose initial guess and non-singular hessian approximation
     point = val
     hess = hessian(point)
+    step_direction = None
 
     # non-optimized step length
     step_length = 1
@@ -101,9 +102,10 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
         # calculate step
         if len(point) > 1:
             # Check if hessian is approximated as inverse
-            if inv and (num_iterations > 1):
+            if inv and (i > 1):
                 step_direction = np.dot(-gradient(point),
                                         hess)
+                print('inv hessian','iteration {}'.format(i))
             # Hessian is not inverse
             else:
                 step_direction = -gradient(point).dot(
@@ -113,7 +115,8 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
 
         # new x
         point1 = point + step_length * step_direction
-        
+
+
         # new hessian callable by approximation
         if update:
             hess = update(hess, gradient, point, point1, inv)
@@ -123,7 +126,6 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
         # stop when minimum
         if np.allclose(gradient(point), 0, atol=convergence):
             return function(point), point, gradient(point), i
-        print(gradient(point),i)
     raise ValueError("Ran out of iterations.")
 
 
@@ -188,9 +190,9 @@ def update_hessian_broyden(hessian, gradient, point, point1, inv=False):
     yk = gradient(point1) - gradient(point)
     # approximate inverse Hessian
     if inv:
-        t = sk - np.dot(hessian, yk)
-        t2 = np.outer(np.dot(sk, hessian), yk)
-        hessian += np.dot(np.outer(t, sk), hessian) / t2
+        t = np.dot(np.outer(sk - np.dot(hessian, yk), sk), hessian)
+        t /= np.outer(np.dot(sk, hessian), yk)
+        hessian += t
     # approximate Hessian
     else:
         yk -= np.dot(hessian, sk)

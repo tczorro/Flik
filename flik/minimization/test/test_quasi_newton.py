@@ -118,26 +118,26 @@ def test_quasi_newton_quad2():
     None
 
     """
-    quad2 = MultiVarFunction({3: [2, 1], -7: [1, 1], -9: [0, 0]}, 2)
+    quad2 = MultiVarFunction({3: [2, 0], +7: [0, 2], +19: [0, 0]}, 2)
     grad2 = quad2.construct_grad()
     hess2 = quad2.construct_hess()
 
-    val = np.array([-0.1, 0.1])
+    val = np.array([1, 0.1])
 
     res1 = quasi_newton.quasi_newtons_opt(quad2, grad2, hess2, val, update=None)
-    print('newtons',res1[0],res1[1],res1[2],res1[3])
+    # print('newtons',res1[0],res1[1],res1[2],res1[3])
 
     res2 = quasi_newton.quasi_newtons_opt(quad2, grad2, hess2, val,
             quasi_newton.update_hessian_broyden, inv=True)
-    print('quasi-broyden',res2[0],res2[1],res2[2],res2[3])
+    # print('quasi-broyden',res2[0],res2[1],res2[2],res2[3])
 
-    # res3 = quasi_newton.quasi_newtons_opt(quad2, grad2, hess2, val,
-    #                                       quasi_newton.update_hessian_bfgs)
+    res3 = quasi_newton.quasi_newtons_opt(quad2, grad2, hess2, val,
+                                          quasi_newton.update_hessian_bfgs)
     # print('quasi-bfgs',res3[0],res3[1],res3[2],res3[3])
 
     res4 = quasi_newton.quasi_newtons_opt(quad2, grad2, hess2, val,
                                           quasi_newton.update_hessian_dfp, inv=True)
-    print('quasi-dfp',res4[0],res4[1],res4[2],res4[3])
+    # print('quasi-dfp',res4[0],res4[1],res4[2],res4[3])
 
 def test_update_hessian_broyden():
     """Test broyden approximation"""
