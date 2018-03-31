@@ -118,27 +118,26 @@ def test_quasi_newton_quad2():
     None
 
     """
-    quad2 = MultiVarFunction({3: [2, 1], -7: [1, 1], -9: [0, 0]}, 2)
+    quad2 = MultiVarFunction({3: [2, 0], +7: [0, 2], +19: [0, 0]}, 2)
     grad2 = quad2.construct_grad()
     hess2 = quad2.construct_hess()
 
-    val = np.array([-6, 0])
-    
-    #step = np.dot(-grad2(val), np.linalg.inv(hess2(val))))
-    start = time.time()
-    res = quasi_newton.quasi_newtons_opt(quad2, grad2, hess2, val, update=None)
-    end = time.time()
-    print(end-start)
-    print('newtons',res[0],res[1],res[2],res[3])
+    val = np.array([1, 0.1])
 
-    
-    start = time.time()
-    res = quasi_newton.quasi_newtons_opt(quad2, grad2, hess2, val,
-            quasi_newton.update_hessian_broyden)
-    end = time.time()
-    print(end-start)
-    print('quasi',res[0],res[1],res[2],res[3])
-    #print(res[1])
+    res1 = quasi_newton.quasi_newtons_opt(quad2, grad2, hess2, val, update=None)
+    # print('newtons',res1[0],res1[1],res1[2],res1[3])
+
+    res2 = quasi_newton.quasi_newtons_opt(quad2, grad2, hess2, val,
+            quasi_newton.update_hessian_broyden, inv=True)
+    # print('quasi-broyden',res2[0],res2[1],res2[2],res2[3])
+
+    res3 = quasi_newton.quasi_newtons_opt(quad2, grad2, hess2, val,
+                                          quasi_newton.update_hessian_bfgs)
+    # print('quasi-bfgs',res3[0],res3[1],res3[2],res3[3])
+
+    res4 = quasi_newton.quasi_newtons_opt(quad2, grad2, hess2, val,
+                                          quasi_newton.update_hessian_dfp, inv=True)
+    # print('quasi-dfp',res4[0],res4[1],res4[2],res4[3])
 
 def test_update_hessian_broyden():
     """Test broyden approximation"""
@@ -154,6 +153,22 @@ def test_update_hessian_broyden():
 
     new_hess = quasi_newton.update_hessian_broyden(hess, grad2, val, val1)
     answer_is = np.array([[0,-43],[-32.53,0]])
+    assert_array_almost_equal(new_hess, answer_is, decimal=2)
+
+def test_update_hessian_dfp():
+    """Test dfp approximation"""
+    quad2 = MultiVarFunction({3: [2, 1], +7: [1, 1]}, 2)
+    grad2 = quad2.construct_grad()
+    hess2 = quad2.construct_hess()
+
+    val = np.array([-0.1, 0.1])
+
+    hess = hess2(val)
+    step = np.dot(-grad2(val), np.linalg.inv(hess))
+    val1 = val + step
+
+    new_hess = quasi_newton.update_hessian_dfp(hess, grad2, val, val1)
+    answer_is = np.array([[0.19, 6.64], [6.64, -0.072]])
     assert_array_almost_equal(new_hess, answer_is, decimal=2)
 
 def test_update_hessian_bfgs():
@@ -233,7 +248,7 @@ def test_update_hessian_sr1():
                             grad, point, point1, True)
     assert np.equal(result2, np.array([[16+1322500/-73632, 8+441600/-73632],[8+441600/-73632, 147456/-73632]])).all()
 
-def test_update_hessian_dfp():
+def test_update_hessian_dfp_inverse():
     """Test the update_hessian_dfp function for inverted
     Hessians.
     """
@@ -256,15 +271,15 @@ def test_update_hessian_dfp():
     d = np.dot(np.dot(a, c), a)/47744
     res = a + b - d
     assert np.equal(result, res).all()
-    
 
 
 
 if __name__ == "__main__":
-    test_quasi_newton_quad1()
-    test_update_hessian_bfgs()
+    #test_quasi_newton_quad1()
+    #test_update_hessian_bfgs()
     #test_quasi_newton_quad1()
     test_quasi_newton_quad2()
     #test_update_hessian_broyden()
     test_update_hessian_sr1()
     test_update_hessian_dfp()
+    test_update_hessian_dfp_inverse()

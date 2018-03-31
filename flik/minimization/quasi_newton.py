@@ -27,10 +27,10 @@ from numbers import Real
 import numpy as np
 
 CONV = 10E-06
-NUM_ITERS = 100
+NUM_ITERS = 30
 
 def quasi_newtons_opt(function, gradient, hessian, val, update=None,
-                inv=None, convergence=CONV, num_iterations=NUM_ITERS):
+                inv=False, convergence=CONV, num_iterations=NUM_ITERS):
     """Quasi-Newton method for approximate hessians.
 
     Parameters
@@ -54,7 +54,7 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
         Hessian approximation method.
         If none just newtons method.
         returns np.array((N,N))
-    inv : str
+    inv : bool
         Option for inverse Hessian approximation.
         If none then approximate the Hessian.
     convergence : float
@@ -72,11 +72,11 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
     if not callable(function):
         raise TypeError('Fucntion should be callable')
     if not callable(gradient):
-        raise TypeError('gradientient should be callable')
+        raise TypeError('Gradientient should be callable')
     if not callable(hessian):
-        raise TypeError('gradientient should be callable')
-    #if not (isinstance(val, np.ndarray) and val.ndim == 1):
-    #    raise TypeError("Argument val should be a 1-dimensional numpy array")
+        raise TypeError('Gradientient should be callable')
+    if not (isinstance(val, np.ndarray) and val.ndim == 1):
+        raise TypeError("Argument val should be a 1-dimensional numpy array")
     if not isinstance(convergence, Real):
         raise TypeError("Argument convergence should be a real number")
     if not isinstance(num_iterations, Integral):
@@ -85,10 +85,12 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
         raise ValueError("Argument convergence should be >= 0.0")
     if num_iterations <= 0:
         raise ValueError("Argument num_iterations should be >= 1")
-
+    if not isinstance(inv, bool):
+        raise TypeError("Inverse option is either True or False")
     # choose initial guess and non-singular hessian approximation
     point = val
     hess = hessian(point)
+    step_direction = None
 
     # non-optimized step length
     step_length = 1
@@ -100,7 +102,7 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
         # calculate step
         if len(point) > 1:
             # Check if hessian is approximated as inverse
-            if inv:
+            if inv and (i > 1):
                 step_direction = np.dot(-gradient(point),
                                         hess)
             # Hessian is not inverse
@@ -112,7 +114,8 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
 
         # new x
         point1 = point + step_length * step_direction
-        
+
+
         # new hessian callable by approximation
         if update:
             hess = update(hess, gradient, point, point1, inv)
@@ -122,6 +125,8 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
         # stop when minimum
         if np.allclose(gradient(point), 0, atol=convergence):
             return function(point), point, gradient(point), i
+    raise ValueError("Ran out of iterations.")
+
 
 def update_hessian_bfgs(hessian, gradient, point, point1, inv=False):
     """BFGs update for quasi-newton.
@@ -194,6 +199,7 @@ def update_hessian_broyden(hessian, gradient, point, point1, inv=False):
     gradient : Callable
     point : np.array((N,))
     point1 : np.array((N,))
+    inv : str
     
     Returns
     -------
@@ -203,9 +209,9 @@ def update_hessian_broyden(hessian, gradient, point, point1, inv=False):
     yk = gradient(point1) - gradient(point)
     # approximate inverse Hessian
     if inv:
-        t = xk - np.dot(hessian, yk)
-        t2 = np.outer(np.dot(sk, hessian), yk)
-        hessian += np.dot(np.outer(t, sk), hessian) / t2
+        t = np.dot(np.outer(sk - np.dot(hessian, yk), sk), hessian)
+        t /= np.outer(np.dot(sk, hessian), yk)
+        hessian += t
     # approximate Hessian
     else:
         yk -= np.dot(hessian, sk)
@@ -214,6 +220,7 @@ def update_hessian_broyden(hessian, gradient, point, point1, inv=False):
     return hessian
 
 def update_hessian_sr1(hessian, gradient, point, point1, inv=False):
+<<<<<<< HEAD
     """Approximate Hessian with new SR1 style.
 
     Parameters
@@ -265,6 +272,7 @@ def update_hessian_dfp(hessian, gradient, point, point1, inv=False):
     gradient : Callable
     point : np.array((N,))
     point1 : np.array((N,))
+    inv : str
 
     Returns
     -------
@@ -283,7 +291,7 @@ def update_hessian_dfp(hessian, gradient, point, point1, inv=False):
     else:
         a = -np.outer(yk, sk) / np.dot(yk, sk)
         b = -np.outer(sk, yk) / np.dot(yk, sk)
-        c = -np.outer(yk, yk) / np.dor(yk, sk)
+        c = np.outer(yk, yk) / np.dot(yk, sk)
         a += np.eye(a.shape[0])
         b += np.eye(b.shape[0])
         newhess = np.dot(np.dot(a, newhess), b) + c
