@@ -272,18 +272,19 @@ def update_hessian_dfp(hessian, gradient, point, point1, inv=False):
     """
     sk = point1 - point
     yk = gradient(point1) - gradient(point)
+    newhess = hessian.copy()
     # approximate inverse Hessian
     if inv:
-        a = -np.outer(sk, yk) / np.dot(sk, yk)
-        b = np.dot(np.dot(hessian, np.outer(yk, yk)), hessian)
-        b /= np.outer(np.dot(yk,h),yk)
-        hessian += a - b
-    # spproximate Hessian
+        a = np.outer(sk, sk) / np.dot(sk, yk)
+        b = np.dot(np.dot(newhess, np.outer(yk, yk)), newhess)
+        b /= np.dot(np.dot(yk,newhess),yk)
+        newhess = newhess + a - b
+    # approximate Hessian
     else:
         a = -np.outer(yk, sk) / np.dot(yk, sk)
         b = -np.outer(sk, yk) / np.dot(yk, sk)
         c = -np.outer(yk, yk) / np.dor(yk, sk)
         a += np.eye(a.shape[0])
         b += np.eye(b.shape[0])
-        hessian = np.dot(np.dot(a, hessian), b) + c
-    return hessian
+        newhess = np.dot(np.dot(a, newhess), b) + c
+    return newhess

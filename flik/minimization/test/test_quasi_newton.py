@@ -233,6 +233,32 @@ def test_update_hessian_sr1():
                             grad, point, point1, True)
     assert np.equal(result2, np.array([[16+1322500/-73632, 8+441600/-73632],[8+441600/-73632, 147456/-73632]])).all()
 
+def test_update_hessian_dfp():
+    """Test the update_hessian_dfp function for inverted
+    Hessians.
+    """
+    # inverse test
+    func = MultiVarFunction({2:[1,2], -9:[1,0], 8:[2,0]}, 2)
+    grad = func.construct_grad()
+    hess = func.construct_hess()
+    point1 = np.array([3,2])
+    point = np.array([1,1])
+    hess_eval = hess([4,3])
+    yk = grad(point1) - grad(point)
+    sk = point1 - point
+    assert np.equal(hess_eval, np.array([[16,12],[12,16]])).all()
+    assert np.equal(yk, np.array([38,20])).all()
+    assert np.equal(sk, np.array([2,1])).all()
+    result = quasi_newton.update_hessian_dfp(hess_eval, grad, point, point1, True)
+    a = np.array([[16,12],[12,16]])
+    b = np.array([[4/96, 2/96],[2/96, 1/96]])
+    c = np.array([[1444, 760],[760, 400]])
+    d = np.dot(np.dot(a, c), a)/47744
+    res = a + b - d
+    assert np.equal(result, res).all()
+    
+
+
 
 if __name__ == "__main__":
     test_quasi_newton_quad1()
@@ -241,3 +267,4 @@ if __name__ == "__main__":
     test_quasi_newton_quad2()
     #test_update_hessian_broyden()
     test_update_hessian_sr1()
+    test_update_hessian_dfp()
