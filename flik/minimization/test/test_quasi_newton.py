@@ -192,13 +192,46 @@ def test_update_hessian_bfgs():
     # choose some arbitrary points
     pk = np.array([2,3])
     pk1 = np.array([3,4])
-    result = quasi_newton.update_hessian_bfgs(hess_eval, 
+    result1 = quasi_newton.update_hessian_bfgs(hess_eval, 
                                               grad, pk, pk1,
                                               False)
-    # check the resulting array
-    assert np.equal(result, np.array([
+    # check the resulting array (non-inverse)
+    assert np.equal(result1, np.array([
                     [-190+400/44, -160+480/44],
                     [-160+480/44, -140+576/44]])).all()
+    # check inverted hessian version
+    result2 = quasi_newton.update_hessian_bfgs(hess_eval, 
+                                              grad, pk, pk1,
+                                              True)
+    a = np.array([[1-20/44, -24/44],[-20/44, 1-24/44]])
+    b = np.array([[6,8],[8,4]])
+    c = np.array([[1-20/44, -20/44],[-24/44, 1-24/44]])
+    d = np.array([[1/44, 1/44],[1/44, 1/44]])
+    res = np.dot(np.dot(a, b), c) + d
+    assert np.equal(result2, res).all()
+
+def test_update_hessian_sr1():
+    """Test the update_hessian_bfgs function.
+    """
+    func = MultiVarFunction({4:[2,1], 5:[0,1], -6:[0,0]}, 2)
+    grad = func.construct_grad()
+    hess = func.construct_hess()
+    hess_eval = hess([1,2])
+    point = np.array([2,3])
+    point1 = np.array([4,3])
+    sk = point1 - point
+    yk = grad(point1) - grad(point)
+    assert np.equal(sk, np.array([2, 0])).all()
+    assert np.equal(yk, np.array([48., 48.])).all()
+    assert np.equal(hess_eval, np.array([[16, 8],[8, 0]])).all()
+    # check regular (non-inverted)
+    result1 = quasi_newton.update_hessian_sr1(hess_eval, 
+                            grad, point, point1, False)
+    assert np.equal(result1, np.array([[16+256/32, 8+512/32],[8+512/32, 1024/32]])).all()
+    # check inverted
+    result2 = quasi_newton.update_hessian_sr1(hess_eval, 
+                            grad, point, point1, True)
+    assert np.equal(result2, np.array([[16+1322500/-73632, 8+441600/-73632],[8+441600/-73632, 147456/-73632]])).all()
 
 
 if __name__ == "__main__":
@@ -207,3 +240,4 @@ if __name__ == "__main__":
     #test_quasi_newton_quad1()
     test_quasi_newton_quad2()
     #test_update_hessian_broyden()
+    test_update_hessian_sr1()

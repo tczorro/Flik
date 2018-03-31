@@ -123,7 +123,7 @@ def quasi_newtons_opt(function, gradient, hessian, val, update=None,
         if np.allclose(gradient(point), 0, atol=convergence):
             return function(point), point, gradient(point), i
 
-def update_hessian_bfgs(hessian, gradient, pointk, pointkp1, inv):
+def update_hessian_bfgs(hessian, gradient, point, point1, inv=False):
     """BFGs update for quasi-newton.
 
     Returns an estimate of the hessian as to avoid
@@ -137,14 +137,14 @@ def update_hessian_bfgs(hessian, gradient, pointk, pointkp1, inv):
     gradient : callable array
         The gradient of the function (not
         evaluated).
-    pointk : np.ndarray
+    point : np.ndarray
         An array representing the point at which
         to evaluate the function, gradient, and
         hessian.
-    pointkp1 : np.ndarray
+    point1 : np.ndarray
         An array representing the next point for
         evaluation (k plus 1).
-    inv : bool
+    inv : bool, default False
         If True, the given hessian is inverted, and
         the resulting hessian should be calculated
         accordingly. If False, the given hessian is
@@ -157,8 +157,8 @@ def update_hessian_bfgs(hessian, gradient, pointk, pointkp1, inv):
         The estimation of the hessian (evaluated).
 
     """
-    sk = pointkp1 - pointk
-    yk = gradient(pointkp1) - gradient(pointk)
+    sk = point1 - point
+    yk = gradient(point1) - gradient(point)
     newhess = hessian.copy()
     # regular hessian approximation
     if not inv:
@@ -172,6 +172,7 @@ def update_hessian_bfgs(hessian, gradient, pointk, pointkp1, inv):
         # can change this to gradient.shape() if
         # the input is guaranteed to be a numpy array
         size = len(gradient)
+        print('size', size)
         # denominator (to avoid calculating 3 times)
         denom = np.dot(yk, sk)
         # part one
@@ -182,7 +183,7 @@ def update_hessian_bfgs(hessian, gradient, pointk, pointkp1, inv):
         newhess = np.dot(np.dot(one, hessian), two) + np.outer(sk, sk)/denom
     return newhess
 
-def update_hessian_broyden(hessian, gradient, point, point1, inv):
+def update_hessian_broyden(hessian, gradient, point, point1, inv=False):
     """
     Approximate Hessian with new x
     Good Broyden style
@@ -212,7 +213,7 @@ def update_hessian_broyden(hessian, gradient, point, point1, inv):
         hessian += np.outer(yk, sk.T)
     return hessian
 
-def update_hessian_sr1(hessian, gradient, point, point1, inv):
+def update_hessian_sr1(hessian, gradient, point, point1, inv=False):
     """Approximate Hessian with new SR1 style.
 
     Parameters
@@ -229,7 +230,7 @@ def update_hessian_sr1(hessian, gradient, point, point1, inv):
     point1 : np.array((N,))
         An array representing the next point for
         evaluation (k plus 1).
-    inv : bool
+    inv : bool, default False
         If True, calculates the result as if
         the given evaluated hessian was inverted.
         If False, calculates the result as normal.
@@ -244,15 +245,16 @@ def update_hessian_sr1(hessian, gradient, point, point1, inv):
     yk = gradient(point1) - gradient(point)
     newhess = hessian.copy()
     if not inv:
-        yk -= np.dot(newhess, sk)
-        yk = np.outer(yk, yk.T) / np.outer(yk.T, sk)
-        newhess += yk / sk
+        # name piece not important
+        piece = yk - np.dot(newhess, sk)
+        piece = np.outer(piece, piece) / np.dot(piece, sk)
+        newhess += piece
     else:
         piece = sk - np.dot(newhess, yk)
         newhess += np.outer(piece, piece)/np.dot(piece, yk)
     return newhess
 
-def update_hessian_dfp(hessian, gradient, point, point1, inv):
+def update_hessian_dfp(hessian, gradient, point, point1, inv=False):
     """
     Approximate Hessian with new x
     DFP style

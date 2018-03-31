@@ -5,6 +5,14 @@ inherits from the object class. The purpose of this object
 is to provide callables that are evaluated for functions
 at a given point.
 
+Notes
+-----
+Need to come up with an option where we can have two
+of the same coefficient for different variables.
+i.e. x^2+y^2 is currently:
+{1:[2,0], 1:[0,2]}
+Small fix could be 1 and 1.0 but would like something better.
+
 Example
 -------
 Create an object:
@@ -193,6 +201,9 @@ class Gradient(MultiVarFunction):
     def __init__(self, grad):
         """Run constructor for Gradient class."""
         self.grad = grad
+
+    def __len__(self):
+        return len(self.grad)
 
     def __str__(self):
         result = ""
