@@ -20,7 +20,7 @@ Run with nosetests or run from the terminal.
 
 import numpy as np
 from flik.minimization import newtons_method
-from flik.MultiVarFunction import MultiVarFunction, Gradient, Hessian
+from flik.multivarfunction import MultiVarFunction, Gradient, Hessian
 
 
 def test_newtons_method_quad1():
